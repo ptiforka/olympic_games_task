@@ -3,7 +3,7 @@ Task https://docs.google.com/document/d/1uCYBbpS4Q2mxIdoHazSnIoA-NZaTzN-cvyUgSJS
 
 Prepare database:
 ```
-    ruby import.rb
+ $ ruby import.rb
 ```
 Command examples:
 ```
