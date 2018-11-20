@@ -111,6 +111,8 @@ def pars_csv(data, time_start) # парсим csv
   puts "parsing time  #{(time_start-Time.now).round(2)}"
   puts 'start import	'
 
+  db = SQLite3::Database.new 'database/olympic_history.db'
+
   games_insert(all_games,  db)
   results_insert(result, db)
   sports_insert(sports, db)
