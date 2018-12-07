@@ -1,38 +1,39 @@
-require_relative '../info'
+# frozen_string_literal: true
 
+require_relative "../app/info"
 
 class Bar_Charts
-
-  def initialize(db, medals_hash, season_hash)
-    @db = db
-    @season_hash = medals_hash
-    @medals_hash = season_hash
+  def initialize
+    @db = DB_connection.get_db_connection
     @medal_index = 1
     @max_medals = 0
-    @const_info = Info.new
   end
 
-  #show results
+  # show results
   def draw(all_medals)
     year_medal = 0
     how_many_medals = 1
     max_bar_charts = 200
-      all_medals.each do |medal|
-        p "#{medal[year_medal]} #{( '█' * (medal[how_many_medals].to_f/@max_medals*max_bar_charts))}  #{medal[how_many_medals]}"
-      end
+    all_medals.each do |medal|
+      count_symbols = medal[how_many_medals].to_f / @max_medals * max_bar_charts
+      puts "#{medal[year_medal]} #{('█' * count_symbols)} #{medal[how_many_medals]}"
+    end
   end
 
-  #find medals
+  def what_medals(medal)
+    if Info.get_medals.value?(medal)
+      "IN (#{medal})"
+    else
+      "IN (1, 2, 3)"
+    end
+  end
+
   def read_bd_medals(season:, medal:, year_or_noc:)
     if year_or_noc.nil?
-      p 'error... input NOC'
+      p "error... input NOC"
       return 0
     end
-    if @medals_hash.values.include? medal
-      medal = "IN (#{medal})"
-    else
-      medal = 'IN (1, 2, 3)'
-    end
+    medal = what_medals(medal)
     list_medals = []
     @db.execute("
         SELECT games.year, COUNT(noc_name) medals FROM athletes
@@ -49,27 +50,24 @@ class Bar_Charts
     draw(list_medals)
   end
 
-  #find top teams
+  # find top teams
+  # rubocop:disable Metrics/MethodLength
   def read_bd_teams(season:, medal:, year_or_noc:)
     count_elements_to_show = 8
     all_teams = []
-    if year_or_noc.nil?
-      year_or_noc = ''
+    year_or_noc = if year_or_noc.nil?
+                    ""
+                  else
+                    "year = #{year_or_noc} AND"
+                  end
+    medal = what_medals(medal)
+    if Info.get_season.value?(season)
+      puts "result: "
     else
-      year_or_noc = "year = #{year_or_noc} AND"
-    end
-
-    if @medals_hash.values.include? medal
-      medal = "IN (#{medal})"
-    else
-      medal = 'IN (1, 2, 3)'
-    end
-    if @const_info.season.values.include? season
-      puts 'result: '
-    else
-      puts 'missing season'
+      puts "missing season"
       return
     end
+
     @db.execute (" SELECT noc_name noc, COUNT(medal) medals FROM results
                 LEFT JOIN athletes ON results.athlete_id = athletes.id
                 LEFT JOIN games ON results.game_id = games.id
@@ -82,5 +80,4 @@ class Bar_Charts
     end
     draw(all_teams[0..count_elements_to_show])
   end
-
 end
